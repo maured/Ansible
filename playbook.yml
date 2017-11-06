@@ -1,0 +1,106 @@
+---
+
+- hosts: servers
+  remote_user: root
+
+  tasks:
+
+    - name: install nginx
+
+      apt:
+
+        name: nginx
+
+        state: latest
+
+
+
+    - name: install git
+
+      apt:
+
+        name: git
+
+        state: latest
+
+
+
+    - name: install curl
+
+      apt:
+
+        name: curl
+
+        state: latest
+
+
+  #L'installation des dépendances est obligatoire dans le but d'avoir un nodejs fonctionnel
+    - name: installation & upgrade des sources(debian)
+      shell: curl -sL https://deb.nodesource.com/setup_8.x | sh
+
+
+
+    - name: install nodejs
+
+      apt:
+
+        name: nodejs
+
+        state: latest
+
+
+
+    - name: clonage du projet nodejs
+      git:
+
+        repo: https://git.mrzee.fr/student/my-node-project.git
+
+        dest: /var/www/my-node-project
+
+
+
+    - name: installation des dep
+endances nodejs
+      npm:
+
+        path: /var/www/my-node-project/myapp/
+
+
+  #Obligation de l'installer en global, sinon nous ne seront pas en mesure de l'utiliser
+
+
+    - name: install pm2
+
+      npm:
+
+         name: pm2
+
+         global: yes
+
+  #Le démarrage se réalise grâce à pm2 que l'on viens d'installer
+    - name: Démarrage de l'application nodejs
+      shell: pm2 start /var/www/my-node-project/myapp/bin/www
+
+
+
+  #Ici nous utilisons la commande cp du shell car la commande copy src/destination nous ressort une erreur
+    - name: Copie du fichier vhost vers nginx sites-enabled
+
+      shell: cp /var/www/my-node-project/vhost /etc/nginx/sites-enabled/default
+
+
+
+
+    - name: restart nginx
+
+      shell: service nginx restart
+
+
+
+  #  NE MARCHE PAS
+
+  #  - service:
+
+  #    name: nginx
+
+  #    state: restarted
